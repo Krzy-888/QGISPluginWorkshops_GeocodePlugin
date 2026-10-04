@@ -23,9 +23,10 @@
  ***************************************************************************/
 """
 from qgis.PyQt.QtCore import QLocale, QTranslator, QCoreApplication
-from qgis.core import QgsSettings
+from qgis.core import QgsSettings, Qgis, QgsPointXY, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
+from geopy.geocoders import Nominatim
 
 # Import the code for the dialog
 from .geo_coder_dialog import GeoCoderDialog
@@ -178,7 +179,43 @@ class GeoCoder:
                 self.tr(u'&Geo Coder'),
                 action)
             self.iface.removeToolBarIcon(action)
+    def add_object(self,point,crs,project,place):
+        temp_layer = QgsVectorLayer(
+            f"Point?crs={crs.authid()}",
+            place,
+            "memory"
+        )
+        project.addMapLayer(temp_layer)
+        provider = temp_layer.dataProvider()   
+        feature = QgsFeature()
+        feature.setGeometry(QgsGeometry.fromPointXY(point))
+        provider.addFeature(feature)
+        temp_layer.updateExtents()
 
+
+    def place_query(self):
+        place = self.dlg.lineEdit.text()
+        location = self.geolocator.geocode(place)
+        if location:
+            point = QgsPointXY(location.longitude, location.latitude)
+            canvas = self.iface.mapCanvas()
+            crs = canvas.mapSettings().destinationCrs()
+            project = QgsProject.instance()
+            transform = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:4326"),
+            crs,
+            project
+            )
+            point = transform.transform(point)
+            canvas.setCenter(point)
+            canvas.refresh()
+            if self.dlg.checkBox.isChecked():
+                self.add_object(point,crs,project,place)
+            self.iface.messageBar().pushMessage('Place Found 🥰',
+            level=Qgis.Success)
+        else:
+            self.iface.messageBar().pushMessage('Place Not Found 😢', 
+            level= Qgis.Warning)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -188,13 +225,6 @@ class GeoCoder:
         if self.first_start == True:
             self.first_start = False
             self.dlg = GeoCoderDialog()
-
-        # show the dialog
+        self.geolocator = Nominatim(user_agent="geo_coder")
+        self.dlg.pushButton.clicked.connect(self.place_query)
         self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
