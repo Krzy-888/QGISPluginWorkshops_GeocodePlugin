@@ -179,6 +179,7 @@ class GeoCoder:
                 self.tr(u'&Geo Coder'),
                 action)
             self.iface.removeToolBarIcon(action)
+            
     def add_object(self,point,crs,project,place):
         temp_layer = QgsVectorLayer(
             f"Point?crs={crs.authid()}",
