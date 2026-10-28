@@ -180,10 +180,10 @@ class GeoCoder:
                 action)
             self.iface.removeToolBarIcon(action)
             
-    def add_object(self,point,crs,project,place):
+    def add_object(self,point,crs,project,name):
         temp_layer = QgsVectorLayer(
             f"Point?crs={crs.authid()}",
-            place,
+            name,
             "memory"
         )
         project.addMapLayer(temp_layer)
@@ -193,30 +193,35 @@ class GeoCoder:
         provider.addFeature(feature)
         temp_layer.updateExtents()
 
-
-    def place_query(self):
-        place = self.dlg.lineEdit.text()
-        location = self.geolocator.geocode(place)
-        if location:
-            point = QgsPointXY(location.longitude, location.latitude)
-            canvas = self.iface.mapCanvas()
-            crs = canvas.mapSettings().destinationCrs()
-            project = QgsProject.instance()
-            transform = QgsCoordinateTransform(
-            QgsCoordinateReferenceSystem("EPSG:4326"),
-            crs,
-            project
-            )
-            point = transform.transform(point)
-            canvas.setCenter(point)
-            canvas.refresh()
-            if self.dlg.checkBox.isChecked():
-                self.add_object(point,crs,project,place)
-            self.iface.messageBar().pushMessage('Place Found 🥰',
-            level=Qgis.Success)
-        else:
-            self.iface.messageBar().pushMessage('Place Not Found 😢', 
-            level= Qgis.Warning)
+    def zoom_2_object(self,location):
+        point = QgsPointXY(location.longitude, location.latitude)
+        canvas = self.iface.mapCanvas()
+        crs = canvas.mapSettings().destinationCrs()
+        project = QgsProject.instance()
+        transform = QgsCoordinateTransform(
+        QgsCoordinateReferenceSystem("EPSG:4326"),
+        crs,
+        project
+        )
+        point = transform.transform(point)
+        canvas.setCenter(point)
+        canvas.refresh()
+        return point, project, crs
+        
+    def place_name_query(self):
+            place_name = self.dlg.lineEdit.text()
+            location = self.geolocator.geocode(place_name)
+            if location:
+                point, project, crs = self.zoom_2_object(location)
+                if self.dlg.checkBox.isChecked():
+                    self.add_object(point,crs,project,place_name)
+                self.iface.messageBar().pushMessage('Place Found 🥰',
+                level=Qgis.Success)
+            else:
+                self.iface.messageBar().pushMessage('Place Not Found 😢', 
+                level= Qgis.Warning)
+            
+            
 
     def run(self):
         """Run method that performs all the real work"""
@@ -227,5 +232,5 @@ class GeoCoder:
             self.first_start = False
             self.dlg = GeoCoderDialog()
         self.geolocator = Nominatim(user_agent="geo_coder")
-        self.dlg.pushButton.clicked.connect(self.place_query)
+        self.dlg.pushButton.clicked.connect(self.place_name_query)
         self.dlg.show()
