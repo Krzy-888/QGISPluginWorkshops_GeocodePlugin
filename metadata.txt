@@ -3,15 +3,15 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Geo Coder
+name=Geo Coder test
 qgisMinimumVersion=3.0
-description=This plugin was developed for the “Plugin Development” workshops. It essentially provides a graphical user interface (GUI) for Python’s geopy module.
+description=This plugin was developed for the “Plugin Development” workshops. It essentially provides a graphical user interface (GUI) for Python’s geopy module. test
 
 version=0.1
 author=Krzysztof Maczynski
 email=krzysztof.maczynski@student.wat.edu.pl
 
-about=This plugin was developed for the “Plugin Development” workshops. It essentially provides a graphical user interface (GUI) for Python’s geopy module.
+about=This plugin was developed for the “Plugin Development” workshops. It essentially provides a graphical user interface (GUI) for Python’s geopy module. test
 
 tracker=https://github.com/Krzy-888/QGISPluginWorkshops_GeocodePlugin/issues
 repository=https://github.com/Krzy-888/QGISPluginWorkshops_GeocodePlugin
